@@ -1,20 +1,27 @@
 from world import *
-from numpy import pad
+from numpy import pad, zeros, count_nonzero, logical_and
+from scipy.ndimage.morphology import binary_dilation
 
 class Robot:
     def __init__(self, world, x, y):
         self.world = world
         self.listeners = []
+        self.viewMap = pad(world.wmap, 1, 'constant')
+        self.nears = binary_dilation(world.wmap)
+        self.history = zeros(world.wmap.shape)
         if(not world.isOpen(x,y)):
             self.x = -1
             self.y = -1
         else:
             self.x = x
             self.y = y
-        self.viewMap = pad(self.world.wmap, 1, 'constant')
+            self.history[y,x] = 1
 
     def getView(self):
         return self.viewMap[self.y:self.y+3, self.x:self.x+3]
+
+    def getScore(self):
+        return count_nonzero(logical_and(self.history, self.nears))
 
     def setLoc(self, x, y):
         if(not self.world.isOpen(x,y)):
@@ -22,6 +29,7 @@ class Robot:
         else:
             self.x = x
             self.y = y
+            self.history[y,x] = 1
             self.notifyAll()
             return True
 

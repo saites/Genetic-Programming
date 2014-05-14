@@ -6,8 +6,12 @@ class Viewer:
     def __init__(self, world, w=280, h=180):
         self.world = world
         self.robots = []
+
         pygame.init()
         self.screen = pygame.display.set_mode((w,h))
+        self.fpsClock = pygame.time.Clock()
+        pygame.display.set_caption('Robot Viewer')
+
         self.W = w
         self.H = h
 
@@ -34,3 +38,4 @@ class Viewer:
         pygame.surfarray.blit_array(self.surface, rot90(im,3))
         pygame.transform.scale(self.surface, (self.W, self.H), self.screen)
         pygame.display.update()
+        self.fpsClock.tick(30)
