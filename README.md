@@ -1,15 +1,12 @@
--------------------
 Genetic Programming
 -------------------
 Code for a simple robot simulator
 
--------------------
 Dependencies
 -------------------
 Makes use of numpy and scipy. If you want to use the viewer, you'll also need
 pygame.
 
--------------------
 Files
 -------------------
 world.py -- Code to load in a bmp as a robot world. White spaces are
