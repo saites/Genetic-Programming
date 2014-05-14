@@ -47,7 +47,7 @@ class Robot:
 
     def notifyAll(self):
         for l in self.listeners:
-            l.notify()
+            l.notify(self)
 
     def addListener(self, l):
         self.listeners.append(l)
