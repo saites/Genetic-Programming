@@ -1,13 +1,13 @@
 from represent import *
 from random import random, randint
 
-ifPer = .5
+ifPer = .45
 mvPer = 1.-ifPer
 
 MAXDEPTH = 10
 def genNode(depth):
     if depth > MAXDEPTH:
-        return
+        return MoveStatement(randint(0,3))
     roll = random()
     if roll < ifPer:
         direction = randint(0,8)
