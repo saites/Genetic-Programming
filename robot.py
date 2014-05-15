@@ -16,6 +16,7 @@ class Robot:
             self.x = x
             self.y = y
             self.history[y,x] = 1
+        self.numSteps = 0
 
     def getView(self):
         return self.viewMap[self.y:self.y+3, self.x:self.x+3]
@@ -24,6 +25,7 @@ class Robot:
         return count_nonzero(logical_and(self.history, self.nears))
 
     def setLoc(self, x, y):
+        self.numSteps += 1
         if(not self.world.isOpen(x,y)):
             return False
         else:
