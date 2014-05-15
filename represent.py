@@ -40,7 +40,7 @@ class Prgm:
             strList.append('\t'*iLevel+str(node))
             self.strHelper(node.iftrue, strList, iLevel+1)
             strList.append('\t'*iLevel+"else:")
-            self.strHelper(node.iftrue, strList, iLevel+1)
+            self.strHelper(node.iffalse, strList, iLevel+1)
         elif isinstance(node, MoveStatement):
             strList.append('\t'*iLevel+str(node))
             if node.nextStep is not None:
