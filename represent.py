@@ -29,9 +29,8 @@ class MoveStatement:
 class Prgm:
     def __init__(self, entry=None):
         self.entry = entry
-
-    def step(self): 
-        pass
+        self.toView = False
+        self.maxSteps = 250
 
     def strHelper(self, node, strList, iLevel):
         if node == None:
@@ -47,27 +46,38 @@ class Prgm:
                 self.strHelper(node.nextStep, strList, iLevel)
 
     def __str__(self):
-        strList = [ 'from robot import *', 
-                    'from world import *',
-                    'from viewer import *', 
-                    'import sys',
-                    'import pygame',
-                    'from pygame.locals import *',
-                    '', 
-                    'w = World(\'resources/star.bmp\')', 
-                    'robot = Robot(w, 2, 2)', 
-                    'v = Viewer(w,560,360)', 
-                    'v.addRobot(robot)', 
-                    'v.draw()',
-                    '',
-                    'while(True):',
-                        '\tfor event in pygame.event.get():',
-                            '\t\tif event.type == QUIT:',
-                                '\t\t\tpygame.quit()',
-                                '\t\t\tsys.exit()',
-                            '\t\telif event.type == KEYDOWN '
-                            ' and event.key == K_ESCAPE:',
-                                '\t\t\t'
-                                'pygame.event.post(pygame.event.Event(QUIT))']
+        strList = [ 
+            'from robot import *', 
+            'from world import *',
+            '',
+            'w = World(\'resources/star.bmp\')',
+            'robot = Robot(w, 2, 2)' 
+            '',
+            ]
+        if self.toView:
+            strList.append([
+                'from viewer import *', 
+                'from pygame.locals import *',
+                'import sys',
+                'import pygame',
+                '', 
+                'v = Viewer(w,560,360)', 
+                'v.addRobot(robot)', 
+                'v.draw()',
+                '',
+                'while(True):',
+                    '\tfor event in pygame.event.get():',
+                        '\t\tif event.type == QUIT:',
+                            '\t\t\tpygame.quit()',
+                            '\t\t\tsys.exit()',
+                        '\t\telif event.type == KEYDOWN '
+                            'and event.key == K_ESCAPE:',
+                            '\t\t\tpygame.event.post(pygame.event.Event(QUIT))'
+                ])
+        else:
+            strList.append('while(robot.numSteps < {}):'.format(self.maxSteps))
         self.strHelper(self.entry, strList, 1)
+        if not self.toView:
+            strList.append('print robot.getScore()')
         return '\n'.join(strList)
+
