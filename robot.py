@@ -8,8 +8,11 @@ class Robot:
         self.listeners = []
         self.viewMap = pad(world.wmap, 1, 'constant')
         self.nears = binary_dilation(world.wmap)
-        self.history = zeros(world.wmap.shape)
-        if(not world.isOpen(x,y)):
+        self.reset(x,y)
+
+    def reset(self, x, y):
+        self.history = zeros(self.world.wmap.shape)
+        if(not self.world.isOpen(x,y)):
             self.x = -1
             self.y = -1
         else:
