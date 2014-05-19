@@ -1,26 +1,13 @@
 from represent import *
 from random import random, randint
+from robot import *
+from world import *
 
-ifPer = .45
-mvPer = 1.-ifPer
-
-MAXDEPTH = 10
-def genNode(depth):
-    if depth > MAXDEPTH:
-        return MoveStatement(randint(0,3))
-    roll = random()
-    if roll < ifPer:
-        direction = randint(0,8)
-        if direction == IfStatement.C:
-            direction += 1
-        node = IfStatement(direction)
-        node.iftrue = genNode(depth+1)
-        node.iffalse = genNode(depth+1) 
-    else: 
-        node = MoveStatement(randint(0,3))
-        node.nextStep = genNode(depth+1)
-    return node
-
-prgm = Prgm(genNode(0))
-
-print prgm
+w = World('resources/star.bmp')
+r = Robot(w, 1,1)
+x,y = w.getRandOpen()
+population = [Prgm(genNode(0)) for i in range(10)]
+scores = [(pgm, pgm.resetExecuteScore(r,x,y)) for pgm in population]
+scores.sort(lambda x,y : y[1] - x[1])
+x.pass
+print scores
