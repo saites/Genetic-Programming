@@ -52,6 +52,8 @@ class Prgm:
         self.entry = entry
         self.toView = False
         self.maxSteps = 1000
+        self.startPos = (-1,-1)
+        self.mapname = ''
 
     def execHelper(self, node):
         if self.robot.numSteps == self.maxSteps:
@@ -75,7 +77,10 @@ class Prgm:
     def execute(self, robot):
         self.robot = robot
         while(self.robot.numSteps < self.maxSteps):
+            steps = self.robot.numSteps
             self.execHelper(self.entry)
+            if self.robot.numSteps == steps:
+                break
 
     def resetExecuteScore(self, robot, x, y):
         robot.reset(x,y)
@@ -100,8 +105,9 @@ class Prgm:
             'from robot import *', 
             'from world import *',
             '',
-            'w = World(\'resources/wideRoom.bmp\')',
-            'robot = Robot(w, 2, 2)' 
+            'w = World(\'resources/{}\')'.format(self.mapname),
+            'robot = Robot(w, {}, {})'\
+                .format(str(self.startPos[0]), str(self.startPos[1])),
             '',
             ]
         if self.toView:
@@ -119,6 +125,7 @@ class Prgm:
                     '\tfor event in pygame.event.get():',
                         '\t\tif event.type == QUIT:',
                             '\t\t\tpygame.quit()',
+                            '\t\t\tprint robot.getScore()',
                             '\t\t\tsys.exit()',
                         '\t\telif event.type == KEYDOWN '
                             'and event.key == K_ESCAPE:',

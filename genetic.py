@@ -1,6 +1,7 @@
 from represent import *
-from random import random, choice, randint
+from random import *
 from copy import deepcopy
+from numpy import *
 
 def buildNodeList(node, nList):
     if not node:
@@ -18,13 +19,13 @@ def buildNodeList(node, nList):
 def chooseRandomNode(prgm):
     return choice(buildNodeList(prgm.entry, []))
 
-def crossOver(pgm1, pgm2):
-    pgm1 = deepcopy(pgm1)
-    pgm2 = deepcopy(pgm2)
+def crossOver(pgma, pgmb):
+    pgm1 = deepcopy(pgma)
+    pgm2 = deepcopy(pgmb)
     p1 = chooseRandomNode(pgm1)
     p2 = chooseRandomNode(pgm2)
     if isinstance(p1, IfStatement):
-        if random() >= .5:
+        if random.random() >= .5:
             child = p1.iftrue
             ctype = 0
         else:
@@ -34,7 +35,7 @@ def crossOver(pgm1, pgm2):
         child = p1.nextStep
         ctype = 2
     if isinstance(p2, IfStatement):
-        if random() >= .5:
+        if random.random() >= .5:
             temp = p2.iftrue
             p2.iftrue = child
         else:
@@ -49,6 +50,10 @@ def crossOver(pgm1, pgm2):
         p1.iffalse = temp
     else:
         p1.nextStep = temp
+    if pgm1.getDepth() > 20:
+        pgm1 = pgma
+    if pgm2.getDepth() > 20:
+        pgm2 = pgmb
     return [pgm1, pgm2]
 
 ifPer = .45
@@ -56,16 +61,16 @@ mvPer = 1.-ifPer
 def genNode(depth, maxdepth):
     if depth > maxdepth:
         return None 
-    roll = random()
+    roll = random.random()
     if roll < ifPer:
         direction = randint(0,8)
         if direction == IfStatement.C:
             direction += 1
         node = IfStatement(direction)
         if depth == maxdepth:
-            if random() > .5:
+            if random.random() > .5:
                 node.iftrue = MoveStatement(randint(0,3))
-            if random() > .5:
+            if random.random() > .5:
                 node.iffalse = MoveStatement(randint(0,3))
         else:
             node.iftrue = genNode(depth+1, maxdepth)
@@ -74,3 +79,46 @@ def genNode(depth, maxdepth):
         node = MoveStatement(randint(0,3))
         node.nextStep = genNode(depth, maxdepth)
     return node
+
+def mutate(prgm):
+    n = chooseRandomNode(prgm)
+    child = genNode(0, randint(0,4))
+    if isinstance(n, IfStatement):
+        if random.random() >= .5:
+            n.iftrue = child
+        else:
+            n.iffalse = child
+    else:
+        n.nextStep = child
+
+def breed(population, metric, crossProb, mutateProb):
+    if len(population) == 1:
+        return deepcopy(population)
+    fitness = [(pgm, metric(pgm)) for pgm in population]
+    fitness.sort(lambda x,y : x[1] - y[1])
+
+    if fitness[-1][1] != 0:
+        fsum = float(sum(f[1] for f in fitness))
+    else:
+        fsum = 1.
+    percent = array([f[1] / fsum for f in fitness])
+    for i in range(len(percent)-1):
+        percent[i+1] += percent[i]
+
+    newpop = deepcopy([fitness[-1][0]])
+    print fitness[-1][1]
+    while len(newpop) < len(population):
+        n1 = deepcopy(fitness[where(percent >= random.random())[0][0]][0])
+        if random.random() < crossProb:
+            n2 = n1
+            while n1 == n2:
+                n2 = fitness[where(percent >= random.random())[0][0]][0]
+            n1, n2 = crossOver(n1,n2)
+            newpop.append(n2)
+        if random.random() < mutateProb:
+            mutate(n1)
+        newpop.append(n1)
+
+    if len(newpop) > len(population):
+        newpop = newpop[:-1]        
+    return newpop
