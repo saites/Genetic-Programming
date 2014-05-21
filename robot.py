@@ -7,7 +7,7 @@ class Robot:
         self.world = world
         self.listeners = []
         self.viewMap = pad(world.wmap, 1, 'constant')
-        self.nears = binary_dilation(world.wmap)
+        self.nears = binary_dilation((world.wmap-255).astype(bool))
         self.reset(x,y)
 
     def reset(self, x, y):
