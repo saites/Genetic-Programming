@@ -23,6 +23,24 @@ class Terminal:
     def makeRand(self):
         pass
 
+class GeneticProgram:
+    def __init__(self, functors, terminals, crossDepth=20, genDepth=5,
+                 crossProb=.95, mutateProb=.05):
+        self.functors = functors
+        self.terminals = terminals
+        self.crossDepth = crossDepth
+        self.genDepth = genDepth
+        self.crossProb = crossProb
+        self.mutateProb = mutateProb
+        
+    def genPopulation(self, popSizeDict):
+        self.population = []
+        for depth in popSizeDict:
+            population +=
+                [genNode(0, depth, self.functors, self.terminals))\
+                for i in range(popSizeDict[depth]]
+            
+
 def buildNodeList(node, nList):
     if not node:
         return nList

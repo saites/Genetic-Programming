@@ -29,7 +29,7 @@ class MoveStatement(Functor):
 
     def getDepth(self):
         return max([0]+[c.getDepth() for c in self.children \
-            if isinstance(c, IfStatement))+1
+            if isinstance(c, IfStatement)])+1
 
     def __str__(self):
         if self.move == MoveStatement.UP:
