@@ -1,40 +1,35 @@
 from robot import *
+from genetic import *
+from random import randint
 
-class IfStatement:
+class IfStatement(Functor):
     NW,N,NE,W,C,E,SW,S,SE = range(9)
-    def __init__(self, direction):
+    def __init__(self, direction=0):
+        Functor.__init__(self, 2)
         self.dirx = direction % 3
         self.diry = direction / 3
-        self.iftrue = None
-        self.iffalse = None
+        self.children = None 
 
     def __str__(self):
         return "if robot.getView()[%d,%d]:" % (self.diry, self.dirx)
 
     def getDepth(self):
-        if self.iftrue and self.iffalse:
-            return max(self.iftrue.getDepth(), self.iffalse.getDepth())+1
-        elif self.iftrue:
-            return self.iftrue.getDepth()+1
-        elif self.iffalse:
-            return self.iffalse.getDepth()+1
-        else:
-            return 1
+        return max([0]+[c.getDepth() for c in self.children if c])+1
 
-class MoveStatement:
+    def makeRand(self):
+        self.dirx = randint(0,2)
+        self.diry = randint(0,2)
+
+class MoveStatement(Functor):
     UP,DOWN,LEFT,RIGHT = range(4)
-    def __init__(self, move):   
+    def __init__(self, move=0):   
+        Functor.__init__(self, 2)
         self.move = move
-        self.nextStep = None
+        self.children = None 
 
     def getDepth(self):
-        node = self.nextStep
-        while(isinstance(node, MoveStatement)):
-            node = node.nextStep
-        if self.nextStep:
-            return self.nextStep.getDepth()
-        else:
-            return 1
+        return max([0]+[c.getDepth() for c in self.children \
+            if isinstance(c, IfStatement))+1
 
     def __str__(self):
         if self.move == MoveStatement.UP:
@@ -46,6 +41,17 @@ class MoveStatement:
         elif self.move == MoveStatement.RIGHT:
             mystr = "robot.moveRight()"
         return mystr
+
+    def makeRand(self):
+        self.move = randint(0,3)
+
+class PassStatement(Terminal):
+    def __init__(self,parent=None):
+        Terminal.__init__(self)
+    def makeRand(self):
+        pass
+    def __str__(self):
+        return "pass"
 
 class Prgm:
     def __init__(self, entry=None):

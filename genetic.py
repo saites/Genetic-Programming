@@ -1,97 +1,82 @@
-from represent import *
 from random import *
 from copy import deepcopy
 from numpy import *
 
+class Functor:
+    def __init__(self,maxChildren):
+        self.children = None
+        self.maxChildren = maxChildren
+    def getDepth(self):
+        return max([0]+[c.getDept() for c in self.children if c])+1
+    def __str__(self):
+        return ""
+    def makeRand(self):
+        pass
+
+class Terminal:
+    def __init__(self):
+        pass
+    def getDepth(self):
+        return 1
+    def __str__(self):
+        return ""
+    def makeRand(self):
+        pass
+
 def buildNodeList(node, nList):
     if not node:
         return nList
-    elif isinstance(node, IfStatement):
-        nList.append(node)
-        buildNodeList(node.iftrue, nList)
-        buildNodeList(node.iffalse, nList)
-        return nList
-    elif isinstance(node, MoveStatement):
-        nList.append(node)
-        buildNodeList(node.nextStep, nList)
-        return nList
+    nList.append(node)
+    for c in node.children:
+        c.buildNodeList(c, nList)
 
 def chooseRandomNode(prgm):
     return choice(buildNodeList(prgm.entry, []))
 
 def crossOver(pgma, pgmb):
+    CROSSDEPTH = 20
     pgm1 = deepcopy(pgma)
     pgm2 = deepcopy(pgmb)
     p1 = chooseRandomNode(pgm1)
     p2 = chooseRandomNode(pgm2)
-    if isinstance(p1, IfStatement):
-        if random.random() >= .5:
-            child = p1.iftrue
-            ctype = 0
-        else:
-            child = p1.iffalse
-            ctype = 1
+
+    if p1.children:
+        c1i = randint(0,len(p1.children)-1)
+        c1 = p1.children.pop(c1i)
     else:
-        child = p1.nextStep
-        ctype = 2
-    if isinstance(p2, IfStatement):
-        if random.random() >= .5:
-            temp = p2.iftrue
-            p2.iftrue = child
-        else:
-            temp = p2.iffalse
-            p2.iffalse = child
+        c1 = None
+
+    if p2.children:
+        c2i = randint(0,len(p2.children)-1)
+        c2 = p2.children.pop(c2i)
     else:
-        temp = p2.nextStep
-        p2.nextStep = child
-    if ctype == 0:
-        p1.iftrue = temp
-    elif ctype == 1:
-        p1.iffalse = temp
-    else:
-        p1.nextStep = temp
-    if pgm1.getDepth() > 20:
+        c2 = None
+
+    if c1:
+        p2.insert(c2i, c1)
+    if c2:
+        p1.insert(c1i, c2)
+
+    if pgm1.getDepth() > CROSSDEPTH:
         pgm1 = deepcopy(pgma)
-    if pgm2.getDepth() > 20:
+    if pgm2.getDepth() > CROSSDEPTH:
         pgm2 = deepcopy(pgmb)
     return [pgm1, pgm2]
 
-ifPer = .45
-mvPer = 1.-ifPer
-def genNode(depth, maxdepth):
+def genNode(depth, maxdepth, functors, terminals):
     if depth > maxdepth:
-        return None 
-    roll = random.random()
-    if roll < ifPer:
-        direction = randint(0,8)
-        if direction == IfStatement.C:
-            direction += 1
-        node = IfStatement(direction)
-        if depth == maxdepth:
-            if random.random() > .5:
-                node.iftrue = MoveStatement(randint(0,3))
-            if random.random() > .5:
-                node.iffalse = MoveStatement(randint(0,3))
-        else:
-            node.iftrue = genNode(depth+1, maxdepth)
-            node.iffalse = genNode(depth+1, maxdepth) 
-    else: 
-        node = MoveStatement(randint(0,3))
-        node.nextStep = genNode(depth, maxdepth)
-    return node
+        return None
+    if depth == maxdepth:
+        n = choice(terminals)()
+        n.makeRand()
+    else:
+        n = choice(functors)()
+        n.makeRand()
+        n.children = [genNode(depth+1, maxdepth, functors, terminals)\
+                        for i in range(n.maxChildren)]       
+    return n
 
 def mutate(prgm):
-    '''
-    n = chooseRandomNode(prgm)
-    child = genNode(0, randint(0,4))
-    if isinstance(n, IfStatement):
-        if random.random() >= .5:
-            n.iftrue = child
-        else:
-            n.iffalse = child
-    else:
-        n.nextStep = child
-    '''
     prgm.entry = genNode(0, randint(0, randint(1,5)))
 
 def breed(population, metric, crossProb, mutateProb):
