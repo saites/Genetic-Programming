@@ -5,15 +5,15 @@ from world import *
 from numpy import *
 from matplotlib.pyplot import *
 
-mapname = 'emptyRoom.bmp'
+mapname = 'star.bmp'
 w = World('resources/'+mapname)
 r = Robot(w, 1,1)
-mutateProb = 0.1
-crossoverProb = 0.9
+mutateProb = 0.05
+crossoverProb = 0.95
 numGens = 100
-population = [Prgm(genNode(0,5)) for i in range(100)]\
-            +[Prgm(genNode(0,3)) for i in range(100)]\
-            +[Prgm(genNode(0,1)) for i in range(100)]
+population = [Prgm(genNode(0,5)) for i in range(300)]\
+            +[Prgm(genNode(0,3)) for i in range(300)]\
+            +[Prgm(genNode(0,1)) for i in range(300)]
 bestFit = zeros((numGens,1))
 
 x,y = w.getRandOpen()
@@ -22,8 +22,12 @@ def metric(pgm):
 for i in range(numGens):
     print i
     x,y = w.getRandOpen()
-    population, bestFit[i,0] =\
-        breed(population, metric, crossoverProb, mutateProb)
+    try:
+        population, bestFit[i,0] =\
+            breed(population, metric, crossoverProb, mutateProb)
+    except RuntimeError:
+        print "maximum recursion depth reached"
+        break
 
 scores = [(pgm, pgm.resetExecuteScore(r,x,y)) for pgm in population]
 scores.sort(lambda x,y : y[1] - x[1])
