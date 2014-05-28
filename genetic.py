@@ -50,9 +50,9 @@ def crossOver(pgma, pgmb):
         p1.iffalse = temp
     else:
         p1.nextStep = temp
-    if pgm1.getDepth() > 20:
+    if pgm1.getDepth() > 100:
         pgm1 = deepcopy(pgma)
-    if pgm2.getDepth() > 20:
+    if pgm2.getDepth() > 100:
         pgm2 = deepcopy(pgmb)
     return [pgm1, pgm2]
 
@@ -81,9 +81,8 @@ def genNode(depth, maxdepth):
     return node
 
 def mutate(prgm):
-    '''
     n = chooseRandomNode(prgm)
-    child = genNode(0, randint(0,4))
+    child = genNode(0, randint(1,5))
     if isinstance(n, IfStatement):
         if random.random() >= .5:
             n.iftrue = child
@@ -91,8 +90,6 @@ def mutate(prgm):
             n.iffalse = child
     else:
         n.nextStep = child
-    '''
-    prgm.entry = genNode(0, randint(0, randint(1,5)))
 
 def breed(population, metric, crossProb, mutateProb):
     if len(population) == 1:
