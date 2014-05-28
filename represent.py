@@ -55,37 +55,34 @@ class Prgm:
         self.startPos = (-1,-1)
         self.mapname = ''
 
-    def execHelper(self, node):
-        if self.robot.numSteps == self.maxSteps:
-            return
-        if isinstance(node, IfStatement):
-            if self.robot.getView()[node.diry, node.dirx]:
-                self.execHelper(node.iftrue)
-            else:
-                self.execHelper(node.iffalse)
-        elif isinstance(node, MoveStatement):
-            if node.move == MoveStatement.UP:
-                self.robot.moveUp()
-            elif node.move == MoveStatement.DOWN:
-                self.robot.moveDown()
-            elif node.move == MoveStatement.RIGHT:
-                self.robot.moveRight()
-            elif node.move == MoveStatement.LEFT:
-                self.robot.moveLeft()
-            self.execHelper(node.nextStep)
-        
     def execute(self, robot):
-        self.robot = robot
-        while(self.robot.numSteps < self.maxSteps):
-            steps = self.robot.numSteps
-            self.execHelper(self.entry)
-            if self.robot.numSteps == steps:
-                break
+        laststeps = -1
+        while robot.numSteps < self.maxSteps and robot.numSteps != laststeps:
+            node = self.entry
+            laststeps = robot.numSteps
+            while robot.numSteps < self.maxSteps:
+                if isinstance(node, IfStatement):
+                    if robot.getView()[node.diry, node.dirx]:
+                        node = node.iftrue
+                    else:
+                        node = node.iffalse
+                elif isinstance(node, MoveStatement):
+                    if node.move == MoveStatement.UP:
+                        robot.moveUp()
+                    elif node.move == MoveStatement.DOWN:
+                        robot.moveDown()
+                    elif node.move == MoveStatement.RIGHT:
+                        robot.moveRight()
+                    elif node.move == MoveStatement.LEFT:
+                        robot.moveLeft()
+                    node = node.nextStep
+                else:
+                    break
 
     def resetExecuteScore(self, robot, x, y):
         robot.reset(x,y)
         self.execute(robot)
-        return self.robot.getScore()
+        return robot.getScore()
 
     def strHelper(self, node, strList, iLevel):
         if node == None:
