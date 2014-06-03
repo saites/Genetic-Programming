@@ -53,98 +53,88 @@ class PassStatement(Terminal):
     def __str__(self):
         return "pass"
 
-class Prgm:
-    def __init__(self, entry=None):
-        self.entry = entry
-        self.toView = False
-        self.maxSteps = 1000
-        self.startPos = (-1,-1)
-        self.mapname = ''
-
-    def execHelper(self, node):
-        if self.robot.numSteps == self.maxSteps:
-            return
-        if isinstance(node, IfStatement):
-            if self.robot.getView()[node.diry, node.dirx]:
-                self.execHelper(node.iftrue)
+def execute(node, robot, maxSteps=1000):
+    laststeps = -1
+    while robot.numSteps < maxSteps and robot.numSteps != laststeps:
+        laststeps = robot.numSteps
+        while robot.numSteps < maxSteps:
+            if isinstance(node, IfStatement):
+                if robot.getView()[node.diry, node.dirx]:
+                    node = node.children[0]
+                else:
+                    node = node.children[1]
+            elif isinstance(node, MoveStatement):
+                if node.move == MoveStatement.UP:
+                    robot.moveUp()
+                elif node.move == MoveStatement.DOWN:
+                    robot.moveDown()
+                elif node.move == MoveStatement.RIGHT:
+                    robot.moveRight()
+                elif node.move == MoveStatement.LEFT:
+                    robot.moveLeft()
+                node = node.children[0]
             else:
-                self.execHelper(node.iffalse)
-        elif isinstance(node, MoveStatement):
-            if node.move == MoveStatement.UP:
-                self.robot.moveUp()
-            elif node.move == MoveStatement.DOWN:
-                self.robot.moveDown()
-            elif node.move == MoveStatement.RIGHT:
-                self.robot.moveRight()
-            elif node.move == MoveStatement.LEFT:
-                self.robot.moveLeft()
-            self.execHelper(node.nextStep)
-        
-    def execute(self, robot):
-        self.robot = robot
-        while(self.robot.numSteps < self.maxSteps):
-            steps = self.robot.numSteps
-            self.execHelper(self.entry)
-            if self.robot.numSteps == steps:
                 break
+        
+def resetExecuteScore(robot, x, y, maxSteps=1000):
+    robot.reset(x,y)
+    execute(robot)
+    return robot.getScore()
 
-    def resetExecuteScore(self, robot, x, y):
-        robot.reset(x,y)
-        self.execute(robot)
-        return self.robot.getScore()
+def stringMe(node, mapname, x, y, toView=True, maxSteps=1000):
+    strList = [ 
+        'from robot import *', 
+        'from world import *',
+        '',
+        'w = World(\'resources/%s\')' % mapname,
+        'robot = Robot(w, %d, %d)' % (x,y),
+        '',
+        ]
 
-    def strHelper(self, node, strList, iLevel):
-        if node == None:
+    if self.toView:
+        strList += [
+            'from viewer import *', 
+            'from pygame.locals import *',
+            'import sys',
+            'import pygame',
+            '', 
+            'v = Viewer(w,560,360)', 
+            'v.addRobot(robot)', 
+            'v.draw()',
+            '',
+            'while(True):',
+                '\tfor event in pygame.event.get():',
+                    '\t\tif event.type == QUIT:',
+                        '\t\t\tpygame.quit()',
+                        '\t\t\tprint robot.getScore()',
+                        '\t\t\tsys.exit()',
+                    '\t\telif event.type == KEYDOWN '
+                        'and event.key == K_ESCAPE:',
+                        '\t\t\tpygame.event.post(pygame.event.Event(QUIT))'
+            ]
+    else:
+        strList += ['while(robot.numSteps < %d):' % maxSteps]
+
+    printing = [(node, 1)]
+    while printing:
+        node, iLevel = printing.pop(0)
+        if isinstance(node, PassStatement):
             strList.append('\t'*iLevel+"pass")
         elif isinstance(node, IfStatement):
             strList.append('\t'*iLevel+str(node))
-            self.strHelper(node.iftrue, strList, iLevel+1)
+            printing.append((node.iftrue, iLevel+1))
             strList.append('\t'*iLevel+"else:")
-            self.strHelper(node.iffalse, strList, iLevel+1)
+            printing.append((node.iffalse, iLevel+1))
         elif isinstance(node, MoveStatement):
             strList.append('\t'*iLevel+str(node))
             if node.nextStep is not None:
                 self.strHelper(node.nextStep, strList, iLevel)
 
-    def __str__(self):
-        strList = [ 
-            'from robot import *', 
-            'from world import *',
-            '',
-            'w = World(\'resources/{}\')'.format(self.mapname),
-            'robot = Robot(w, {}, {})'\
-                .format(str(self.startPos[0]), str(self.startPos[1])),
-            '',
-            ]
-        if self.toView:
-            strList += [
-                'from viewer import *', 
-                'from pygame.locals import *',
-                'import sys',
-                'import pygame',
-                '', 
-                'v = Viewer(w,560,360)', 
-                'v.addRobot(robot)', 
-                'v.draw()',
-                '',
-                'while(True):',
-                    '\tfor event in pygame.event.get():',
-                        '\t\tif event.type == QUIT:',
-                            '\t\t\tpygame.quit()',
-                            '\t\t\tprint robot.getScore()',
-                            '\t\t\tsys.exit()',
-                        '\t\telif event.type == KEYDOWN '
-                            'and event.key == K_ESCAPE:',
-                            '\t\t\tpygame.event.post(pygame.event.Event(QUIT))'
-                ]
-        else:
-            strList.append('while(robot.numSteps < {}):'.format(self.maxSteps))
-        self.strHelper(self.entry, strList, 1)
-        if not self.toView:
-            strList.append('print robot.getScore()')
-        return '\n'.join(strList)
-
     def getDepth(self):
         if not self.entry:
             return 0
         return self.entry.getDepth()
+
+    if not self.toView:
+        strList.append('print robot.getScore()')
+    return '\n'.join(strList)
