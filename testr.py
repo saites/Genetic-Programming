@@ -8,35 +8,33 @@ from matplotlib.pyplot import *
 mapname = 'emptyRoom.bmp'
 w = World('resources/'+mapname)
 r = Robot(w, 1,1)
-mutateProb = 0.1
-crossoverProb = 0.9
 numGens = 100
-population = [Prgm(genNode(0,5)) for i in range(100)]\
-            +[Prgm(genNode(0,3)) for i in range(100)]\
-            +[Prgm(genNode(0,1)) for i in range(100)]
-bestFit = zeros((numGens,1))
 
 x,y = w.getRandOpen()
 def metric(pgm):
     return pgm.resetExecuteScore(r,x,y)
+
+functors = [IfStatement, MoveStatement]
+terminals = [PassStatement]
+GP = GeneticProgram(functors, terminals, metric)
+GP.genPopulation({i:50 for i in range(1,6)})
+
+bestFit = zeros((numGens,1))
 for i in range(numGens):
     print i
     x,y = w.getRandOpen()
-    population, bestFit[i,0] =\
-        breed(population, metric, crossoverProb, mutateProb)
+    GP.breed()
+    print [f[1] for f in GP.fitness]
+    bestFit[i,0] = GP.fitness[0][1]
 
-scores = [(pgm, pgm.resetExecuteScore(r,x,y)) for pgm in population]
-scores.sort(lambda x,y : y[1] - x[1])
-print scores
 
-best = scores[0][0]
-best.toView = True
-best.startPos = (x,y)
-best.mapname = mapname
+print [f[1] for f in GP.fitness]
+best = GP.fitness[-1][0]
+prgm = stringMe(best, mapname, x, y)
 
 with open('goodpgm.py', 'w') as F:
-    F.write(str(best))
+    F.write(prgm)
 
-print bestFit
+print prgm
 plot(bestFit)
 show()
