@@ -15,6 +15,7 @@ v.draw()
 while True:
     for event in pygame.event.get():
         if event.type == QUIT:
+            print r.getScore()
             pygame.quit()
             sys.exit()
         elif event.type == KEYDOWN:

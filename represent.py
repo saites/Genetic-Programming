@@ -1,40 +1,21 @@
 from robot import *
+from copy import copy
 
 class IfStatement:
     NW,N,NE,W,C,E,SW,S,SE = range(9)
     def __init__(self, direction):
         self.dirx = direction % 3
         self.diry = direction / 3
-        self.iftrue = None
-        self.iffalse = None
+        self.children = [None, None]
 
     def __str__(self):
         return "if robot.getView()[%d,%d]:" % (self.diry, self.dirx)
-
-    def getDepth(self):
-        if self.iftrue and self.iffalse:
-            return max(self.iftrue.getDepth(), self.iffalse.getDepth())+1
-        elif self.iftrue:
-            return self.iftrue.getDepth()+1
-        elif self.iffalse:
-            return self.iffalse.getDepth()+1
-        else:
-            return 1
 
 class MoveStatement:
     UP,DOWN,LEFT,RIGHT = range(4)
     def __init__(self, move):   
         self.move = move
-        self.nextStep = None
-
-    def getDepth(self):
-        node = self.nextStep
-        while(isinstance(node, MoveStatement)):
-            node = node.nextStep
-        if self.nextStep:
-            return self.nextStep.getDepth()
-        else:
-            return 1
+        self.children = [None]
 
     def __str__(self):
         if self.move == MoveStatement.UP:
@@ -55,6 +36,19 @@ class Prgm:
         self.startPos = (-1,-1)
         self.mapname = ''
 
+    '''
+    def deepcopy(self):
+        new = copy(self.entry)
+        q = [(new, c, i) for (i,c) in enumerate(new.children) if c]
+        while q:
+            p,c,i = q.pop(0)
+            p.children[i] = copy(c)
+            q.extend([(c, cc, i) for (i,cc) in enumerate(c.children) if cc])
+        retval = copy(self)
+        retval.entry = new
+        return retval
+        '''
+
     def execute(self, robot):
         laststeps = -1
         while robot.numSteps < self.maxSteps and robot.numSteps != laststeps:
@@ -63,9 +57,9 @@ class Prgm:
             while robot.numSteps < self.maxSteps:
                 if isinstance(node, IfStatement):
                     if robot.getView()[node.diry, node.dirx]:
-                        node = node.iftrue
+                        node = node.children[0]
                     else:
-                        node = node.iffalse
+                        node = node.children[1]
                 elif isinstance(node, MoveStatement):
                     if node.move == MoveStatement.UP:
                         robot.moveUp()
@@ -75,7 +69,7 @@ class Prgm:
                         robot.moveRight()
                     elif node.move == MoveStatement.LEFT:
                         robot.moveLeft()
-                    node = node.nextStep
+                    node = node.children[0]
                 else:
                     break
 
@@ -89,13 +83,13 @@ class Prgm:
             strList.append('\t'*iLevel+"pass")
         elif isinstance(node, IfStatement):
             strList.append('\t'*iLevel+str(node))
-            self.strHelper(node.iftrue, strList, iLevel+1)
+            self.strHelper(node.children[0], strList, iLevel+1)
             strList.append('\t'*iLevel+"else:")
-            self.strHelper(node.iffalse, strList, iLevel+1)
+            self.strHelper(node.children[1], strList, iLevel+1)
         elif isinstance(node, MoveStatement):
             strList.append('\t'*iLevel+str(node))
-            if node.nextStep is not None:
-                self.strHelper(node.nextStep, strList, iLevel)
+            if node.children[0] is not None:
+                self.strHelper(node.children[0], strList, iLevel)
 
     def __str__(self):
         strList = [ 
@@ -138,4 +132,11 @@ class Prgm:
     def getDepth(self):
         if not self.entry:
             return 0
-        return self.entry.getDepth()
+        q = [(1, self.entry)]
+        maxd = 1
+        while q:
+            d, n = q.pop(0)
+            maxd = max(d, maxd)
+            q += [(d+1,c) for c in n.children if isinstance(c,IfStatement)]
+            q += [(d,c) for c in n.children if isinstance(c,MoveStatement)]
+        return maxd

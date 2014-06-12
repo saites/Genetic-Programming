@@ -5,16 +5,17 @@ from world import *
 from numpy import *
 from matplotlib.pyplot import *
 
-mapname = 'star.bmp'
+mapname = 'wideRoom.bmp'
+programsLoc = 'programs'
 w = World('resources/'+mapname)
 r = Robot(w, 1,1)
-mutateProb = 0.05
-crossoverProb = 0.95
+mutateProb = 0.10
+crossoverProb = .99
 numGens = 100
-population = [Prgm(genNode(0,5)) for i in range(300)]\
-            +[Prgm(genNode(0,3)) for i in range(300)]\
-            +[Prgm(genNode(0,1)) for i in range(300)]
+population = [Prgm(genNode(0,5)) for i in range(500)]\
+            +[Prgm(genNode(0,1)) for i in range(500)]
 bestFit = zeros((numGens,1))
+avgFit = zeros((numGens,1))
 
 x,y = w.getRandOpen()
 def metric(pgm):
@@ -22,25 +23,21 @@ def metric(pgm):
 for i in range(numGens):
     print i
     x,y = w.getRandOpen()
-    try:
-        population, bestFit[i,0] =\
-            breed(population, metric, crossoverProb, mutateProb)
-    except RuntimeError:
-        print "maximum recursion depth reached"
-        break
+#    try:
+    population, best, avgFit[i,0] =\
+        breed(population, metric, crossoverProb, mutateProb)
+    bestFit[i, 0] = best[1]
+    with open('%s/pgm%d.py' % (programsLoc, i), 'w') as F:
+        best[0].toView = True
+        best[0].startPos = (x,y)
+        best[0].mapname = mapname
+        F.write(str(best[0]))
+#    except RuntimeError as e:
+#        print e
+#        print "maximum recursion depth reached"
+#        break
 
-scores = [(pgm, pgm.resetExecuteScore(r,x,y)) for pgm in population]
-scores.sort(lambda x,y : y[1] - x[1])
-print scores
-
-best = scores[0][0]
-best.toView = True
-best.startPos = (x,y)
-best.mapname = mapname
-
-with open('goodpgm.py', 'w') as F:
-    F.write(str(best))
-
-print bestFit
 plot(bestFit)
+show()
+plot(avgFit)
 show()
